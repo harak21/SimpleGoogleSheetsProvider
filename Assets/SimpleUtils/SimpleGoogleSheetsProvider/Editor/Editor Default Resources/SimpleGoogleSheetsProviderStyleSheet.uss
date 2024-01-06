@@ -1,0 +1,11 @@
+:root {
+    --sapphireblue-color: rgb(27, 32, 44);
+    --blackishblue-color: rgb(21, 26, 36);
+    --selection-color: chartreuse;
+    --utility-color: rgb(44, 55, 71);
+    background-color: rgb(21, 26, 36);
+}
+
+.unity-text-field > .unity-text-field__input {
+    background-color: var(--utility-color);
+}

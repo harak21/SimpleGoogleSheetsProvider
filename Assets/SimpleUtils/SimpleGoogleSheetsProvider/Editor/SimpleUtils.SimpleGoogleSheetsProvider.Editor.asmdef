@@ -1,0 +1,18 @@
+{
+    "name": "SimpleUtils.SimpleGoogleSheetsProvider.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:800ea7c7fe608ad4ea800d570ceac08d"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
