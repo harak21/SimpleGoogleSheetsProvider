@@ -42,8 +42,23 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.EditorBuilder
                     case GoogleSheetsPullMethodAttribute:
                         GeneratePullButtonMethod(stringBuilder, method);
                         break;
+                    case GoogleSheetsRawPullMethodAttribute:
+                        GenerateRawPullMethod(stringBuilder, method);
+                        break;
+                    case GoogleSheetsRawPushMethodAttribute:
+                        GenerateRawPushMethod(stringBuilder, method);
+                        break;
                 }
             }
+        }
+
+        private static void GenerateRawPullMethod(StringBuilder stringBuilder, ButtonMethodInfo buttonMethodInfo)
+        {
+            stringBuilder.AppendLine(
+                @$"var rawPullMethodInfo = typeof({buttonMethodInfo.Method.DeclaringType.FullName}).GetMethod(""{buttonMethodInfo.Method.Name}"",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);");
+            stringBuilder.AppendLine(
+                $"SimpleUtils.SimpleGoogleSheetsProvider.Editor.EditorBuilder.StaticInspectorGuiCallbacks.GenerateRawPullButton(target, rawPullMethodInfo);");
         }
 
         private static void GeneratePullButtonMethod(StringBuilder stringBuilder, ButtonMethodInfo buttonMethodInfo)
@@ -53,6 +68,15 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.EditorBuilder
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);");
             stringBuilder.AppendLine(
                 $"SimpleUtils.SimpleGoogleSheetsProvider.Editor.EditorBuilder.StaticInspectorGuiCallbacks.GeneratePullButton(target, pullMethodInfo);");
+        }
+
+        private static void GenerateRawPushMethod(StringBuilder stringBuilder, ButtonMethodInfo buttonMethodInfo)
+        {
+            stringBuilder.AppendLine(
+                @$"var rawPushMethodInfo = typeof({buttonMethodInfo.Method.DeclaringType.FullName}).GetMethod(""{buttonMethodInfo.Method.Name}"",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);");
+            stringBuilder.AppendLine(
+                $"SimpleUtils.SimpleGoogleSheetsProvider.Editor.EditorBuilder.StaticInspectorGuiCallbacks.GenerateRawPushButton(target, rawPushMethodInfo);");
         }
 
         private static void GeneratePushButtonMethod(StringBuilder stringBuilder, ButtonMethodInfo buttonMethodInfo)

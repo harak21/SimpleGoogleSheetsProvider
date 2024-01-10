@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
+using Google.Apis.Sheets.v4.Data;
 using SimpleUtils.SimpleGoogleSheetsProvider.Core.Attributes;
 using SimpleUtils.SimpleGoogleSheetsProvider.Core.GoogleSheetData;
 using SimpleUtils.SimpleGoogleSheetsProvider.Editor.EditorBuilder.ReflectionInfo;
@@ -34,6 +35,18 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.EditorBuilder
                     {
                         AddPushMethod(method, pushMethodAttribute, buttonMethods);
                     }
+
+                    var rawPullMethodAttribute = method.GetCustomAttribute<GoogleSheetsRawPullMethodAttribute>();
+                    if (rawPullMethodAttribute != null)
+                    {
+                        AddRawPullMethod(method, rawPullMethodAttribute, buttonMethods);
+                    }
+
+                    var rawPushMethodAttribute = method.GetCustomAttribute<GoogleSheetsRawPushMethodAttribute>();
+                    if (rawPushMethodAttribute != null)
+                    {
+                        AddRawPushMethod(method, rawPushMethodAttribute, buttonMethods);
+                    }
                 }
 
                 if (buttonMethods.Count <= 0)
@@ -46,6 +59,21 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.EditorBuilder
             }
         }
 
+        private static void AddRawPullMethod(MethodInfo method, 
+            GoogleSheetsRawPullMethodAttribute baseAttribute, List<ButtonMethodInfo> buttonMethods)
+        {
+            var parameterInfos = method.GetParameters();
+
+            if (parameterInfos.Length == 0 || parameterInfos.Length > 1 ||
+                parameterInfos[0].ParameterType != typeof(BatchGetValuesByDataFilterResponse))
+            {
+                Debug.LogError("Method must contain an input parameter BatchGetValuesByDataFilterResponse");
+                return;
+            }
+            
+            buttonMethods.Add(new ButtonMethodInfo(method, baseAttribute));
+        }
+
         private static void AddPullMethod(MethodInfo method,
             GoogleSheetsBaseAttribute baseAttribute, List<ButtonMethodInfo> buttonMethods)
         {
@@ -55,6 +83,20 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.EditorBuilder
                 parameterInfos[0].ParameterType != typeof(GoogleSheetValues))
             {
                 Debug.LogError("Method must contain an input parameter GoogleSheetValues");
+                return;
+            }
+
+            buttonMethods.Add(new ButtonMethodInfo(method, baseAttribute));
+        }
+
+        private static void AddRawPushMethod(MethodInfo method, 
+            GoogleSheetsRawPushMethodAttribute baseAttribute, List<ButtonMethodInfo> buttonMethods)
+        {
+            var methodReturnType = method.ReturnType;
+
+            if (methodReturnType != typeof(List<RowData>))
+            {
+                Debug.LogError("Method must return List<RowData>");
                 return;
             }
 

@@ -1,16 +1,18 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SimpleUtils.SimpleGoogleSheetsProvider.Core.GoogleSheetData
 {
     [Serializable]
     public class GoogleSheetValues
     {
-        public List<Row> Rows { get; } = new();
+        [SerializeField] private List<Row> rows = new();
+        public List<Row> Rows => rows;
 
         public void AddRow(List<string> rowData)
         {
-            Rows.Add(new Row(rowData));
+            rows.Add(new Row(rowData));
         }
     }
 }

@@ -1,16 +1,18 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SimpleUtils.SimpleGoogleSheetsProvider.Core.GoogleSheetData
 {
     [Serializable]
     public class Row
     {
-        public List<string> Cells { get; }
+        [SerializeField] private List<string> cells;
+        public List<string> Cells => cells;
 
         public Row(List<string> cells)
         {
-            Cells = cells;
+            this.cells = cells;
         }
     }
 }

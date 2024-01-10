@@ -12,24 +12,24 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.GoogleSheets
 {
     public static class GoogleSheetsProvider
     {
-        private static readonly SimpleGoogleSheetsEditorData _editorData;
+        private static readonly SimpleGoogleSheetsEditorData EditorData;
         private static GoogleSheetsServiceConnector _serviceConnector;
 
         static GoogleSheetsProvider()
         {
-            _editorData = AssetDatabase.LoadAssetAtPath<SimpleGoogleSheetsEditorData>(
+            EditorData = AssetDatabase.LoadAssetAtPath<SimpleGoogleSheetsEditorData>(
                 AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets($"t: SimpleGoogleSheetsEditorData").First()));
         }
-        
-        public static async Task<GoogleSheetValues> Pull(string spreedSheetId, int sheetID)
+
+        public static async Task<BatchGetValuesByDataFilterResponse> PullRawData(string spreedSheetId, int sheetID)
         {
             Debug.Log("Retrieving data from the table started");
 
             if (_serviceConnector == null)
             {
-                _serviceConnector = new GoogleSheetsServiceConnector(_editorData.Data);
+                _serviceConnector = new GoogleSheetsServiceConnector(EditorData.Data);
             }
-
+            
             var batchGetValuesByDataFilterRequest = new BatchGetValuesByDataFilterRequest()
             {
                 DataFilters = new DataFilter[1]
@@ -51,9 +51,8 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.GoogleSheets
                 var getRequest =
                     sheetService.Spreadsheets.Values.BatchGetByDataFilter(batchGetValuesByDataFilterRequest, spreedSheetId);
                 var spreadSheet = await getRequest.ExecuteAsync();
-                var googleSheetValues = CreateSheetValues(spreadSheet);
                 Debug.Log("Retrieving data from the table is finished");
-                return googleSheetValues;
+                return spreadSheet;
             }
             catch (Exception e)
             {
@@ -62,20 +61,28 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.GoogleSheets
 
             return null;
         }
+        
+        public static async Task<GoogleSheetValues> Pull(string spreedSheetId, int sheetID)
+        {
+            Debug.Log("Retrieving data from the table started");
 
-        public static async void Push(GoogleSheetValues values, string spreadSheetId, int tableId)
+            var rawData = await PullRawData(spreedSheetId, sheetID);
+            return rawData == null ? null : CreateSheetValues(rawData);
+        }
+
+        public static async void RawPush(List<RowData> rowsData, string spreadSheetId, int tableId)
         {
             Debug.Log("Downloading of values to the table started");
 
             if (_serviceConnector == null)
             {
-                _serviceConnector = new GoogleSheetsServiceConnector(_editorData.Data);
+                _serviceConnector = new GoogleSheetsServiceConnector(EditorData.Data);
             }
 
             try
             {
                 var sheetService = await _serviceConnector.Connect();
-                var batchUpdateSpreadsheetRequest = CreateBatchUpdateRequest(values, tableId);
+                var batchUpdateSpreadsheetRequest = CreateBatchUpdateRequest(rowsData, tableId);
                 var pushRequest = sheetService.Spreadsheets.BatchUpdate(batchUpdateSpreadsheetRequest, spreadSheetId);
                 await pushRequest.ExecuteAsync();
                 Debug.Log("Downloading of values to the table is finished");
@@ -84,6 +91,12 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.GoogleSheets
             {
                 Debug.LogException(e);
             }
+        }
+
+        public static void Push(GoogleSheetValues values, string spreadSheetId, int tableId)
+        {
+            var rowsData = CreateRowData(values);
+            RawPush(rowsData, spreadSheetId, tableId);
         }
 
         private static GoogleSheetValues CreateSheetValues(BatchGetValuesByDataFilterResponse response)
@@ -120,29 +133,8 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.GoogleSheets
             return values;
         }
 
-        private static BatchUpdateSpreadsheetRequest CreateBatchUpdateRequest(GoogleSheetValues values, int sheetID)
+        private static BatchUpdateSpreadsheetRequest CreateBatchUpdateRequest(List<RowData> rowsData, int sheetID)
         {
-            List<RowData> rowsData = new List<RowData>();
-            
-            foreach (var row in values.Rows)
-            {
-                IList<CellData> cellsData = new List<CellData>();
-                foreach (var cell in row.Cells)
-                {
-                    cellsData.Add(new CellData()
-                    {
-                        UserEnteredValue = new ExtendedValue()
-                        {
-                            StringValue = cell
-                        }
-                    });
-                }
-                rowsData.Add(new RowData()
-                {
-                    Values = cellsData
-                });
-            }
-
             UpdateCellsRequest updateCellsRequest = new UpdateCellsRequest()
             {
                 Range = new GridRange()
@@ -165,6 +157,33 @@ namespace SimpleUtils.SimpleGoogleSheetsProvider.Editor.GoogleSheets
                     }
                 }
             };
+        }
+
+        private static List<RowData> CreateRowData(GoogleSheetValues values)
+        {
+            List<RowData> rowsData = new List<RowData>();
+
+            foreach (var row in values.Rows)
+            {
+                IList<CellData> cellsData = new List<CellData>();
+                foreach (var cell in row.Cells)
+                {
+                    cellsData.Add(new CellData()
+                    {
+                        UserEnteredValue = new ExtendedValue()
+                        {
+                            StringValue = cell
+                        }
+                    });
+                }
+
+                rowsData.Add(new RowData()
+                {
+                    Values = cellsData
+                });
+            }
+
+            return rowsData;
         }
     }
     
